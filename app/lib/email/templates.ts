@@ -33,3 +33,7 @@ export const emailTemplateSchema = z.object({
   subject: z.string().trim().min(1).max(200).refine(v => !/[\r\n]/.test(v), 'Subject must be one line').refine(validVariables, 'Unknown template variable'),
   body: z.string().trim().min(1).max(20000).refine(validVariables, 'Unknown template variable'),
 }).strict();
+
+export const emailToggleSchema = z.object({
+  type: z.enum(EMAIL_TYPES), enabled: z.boolean(),
+}).strict();

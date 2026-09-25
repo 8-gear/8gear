@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: process.cwd(),
+  outputFileTracingIncludes: { '/api/**/*': ['./public/logo.png'] },
   turbopack: {
     root: process.cwd(),
   },

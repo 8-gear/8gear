@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/adminAuth';
 import EmailTemplate from '@/models/EmailTemplate';
-import { EMAIL_TYPES, emailTemplateSchema } from '@/lib/email/templates';
+import { EMAIL_TYPES, emailTemplateSchema, emailToggleSchema } from '@/lib/email/templates';
 import { getEmailTemplate } from '@/lib/email/sendOrderEmail';
 
 export async function GET() {
@@ -25,5 +25,22 @@ export async function PUT(req: Request) {
     return NextResponse.json(parsed.data);
   } catch (error) {
     return NextResponse.json({ error: error instanceof SyntaxError ? 'Invalid JSON' : 'Unable to save template' }, { status: error instanceof SyntaxError ? 400 : 500 });
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const auth = await requireAdminApi('/admin/emails');
+    if ('error' in auth) return auth.error;
+    const parsed = emailToggleSchema.safeParse(await req.json());
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid email toggle' }, { status: 400 });
+    await getEmailTemplate(parsed.data.type);
+    const saved = await EmailTemplate.findOneAndUpdate(
+      { type: parsed.data.type }, { $set: { enabled: parsed.data.enabled } },
+      { new: true, runValidators: true },
+    ).orFail();
+    return NextResponse.json({ type: saved.type, enabled: saved.enabled });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof SyntaxError ? 'Invalid JSON' : 'Unable to save email setting' }, { status: error instanceof SyntaxError ? 400 : 500 });
   }
 }

@@ -1,4 +1,6 @@
 import 'server-only';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 export const MICROSOFT_MAILBOX = 'ma@8-gear.com';
 
 type MailMessage = {
@@ -76,6 +78,13 @@ async function getAccessToken(): Promise<AccessToken> {
 
 export async function sendMicrosoftMail(message: MailMessage): Promise<void> {
   if (!message.to?.trim()) throw new Error('Email recipient is required.');
+  // CID images travel with the message, including when the site is private or local.
+  const attachments = message.html.includes('src="cid:8gears-logo"') ? [{
+    '@odata.type': '#microsoft.graph.fileAttachment',
+    name: '8gears-logo.png', contentType: 'image/png',
+    contentId: '8gears-logo', isInline: true,
+    contentBytes: (await readFile(path.join(process.cwd(), 'public', 'logo.png'))).toString('base64'),
+  }] : undefined;
   const token = await getAccessToken();
   let response: Response;
   try {
@@ -90,6 +99,7 @@ export async function sendMicrosoftMail(message: MailMessage): Promise<void> {
         body: JSON.stringify({
           message: {
             subject: message.subject,
+            attachments,
             body: { contentType: 'HTML', content: message.html },
             from: { emailAddress: { address: MICROSOFT_MAILBOX, name: message.senderName } },
             toRecipients: [{ emailAddress: { address: message.to.trim() } }],

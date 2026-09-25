@@ -9,11 +9,11 @@ export function safeHttpUrl(value: string | undefined): string {
   if (!value) return '';
   try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password ? url.href : ''; } catch { return ''; }
 }
-export function renderOrderEmail(template: EmailTemplateConfig, order: EmailOrder, siteUrl: string) {
+export function renderOrderEmail(template: EmailTemplateConfig, order: EmailOrder, siteUrl: string, inlineLogo = false) {
   const publicSiteUrl = safeHttpUrl(siteUrl);
-  const logoUrl = publicSiteUrl ? new URL('/logo.png', publicSiteUrl).href : '';
+  const logoUrl = inlineLogo ? 'cid:8gears-logo' : publicSiteUrl ? new URL('/logo.png', publicSiteUrl).href : '';
   const brandHeader = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="8 GEARS" width="180" height="94" style="display:block;width:180px;max-width:100%;height:auto;border:0">`
+    ? `<img src="${escapeHtml(logoUrl)}" alt="8 GEARS" width="180" height="94" style="display:block;width:180px;max-width:100%;height:94px;border:0">`
     : '<strong style="font-size:28px">8 GEARS</strong>';
   const money = (value: number) => `${order.amounts.currency} ${value.toFixed(2)}`;
   const address = [order.shippingAddress.address, order.shippingAddress.apartment, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.zip, order.shippingAddress.country].filter(Boolean).join(', ');

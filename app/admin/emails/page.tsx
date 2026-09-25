@@ -25,7 +25,7 @@ export default function EmailsPage() {
   useEffect(() => {
     let active = true;
     setPreviewSiteUrl(window.location.origin);
-    fetch('/api/admin/emails').then(async res => {
+    fetch('/api/admin/emails', { cache: 'no-store' }).then(async res => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unable to load templates');
       if (active) setTemplates(data);
@@ -38,6 +38,25 @@ export default function EmailsPage() {
     setTemplates(items => items.map((item, index) => index === selected ? { ...item, ...change } : item));
     setDirty(previous => new Set(previous).add(current.type));
     setMessage('');
+  };
+  const toggleEnabled = async (enabled: boolean) => {
+    const type = current.type;
+    const previous = current.enabled;
+    setSaving(true); setMessage('');
+    setTemplates(items => items.map(item => item.type === type ? { ...item, enabled } : item));
+    try {
+      const res = await fetch('/api/admin/emails', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to save email setting');
+      setTemplates(items => items.map(item => item.type === type ? { ...item, enabled: data.enabled } : item));
+      setMessage(`${EMAIL_LABELS[type]} ${data.enabled ? 'enabled' : 'disabled'} and saved.`);
+    } catch (error) {
+      setTemplates(items => items.map(item => item.type === type ? { ...item, enabled: previous } : item));
+      setMessage(error instanceof Error ? error.message : 'Unable to save email setting');
+    } finally { setSaving(false); }
   };
   const save = async () => {
     setSaving(true); setMessage('');
@@ -61,7 +80,8 @@ export default function EmailsPage() {
         <h2 className="text-2xl font-black">{EMAIL_LABELS[current.type]}</h2>
         <p className="text-sm text-slate-500">Recipient: {current.type === 'new_order' ? 'Configured admin/store email' : 'Customer'}</p>
         <fieldset disabled={saving} className="space-y-5">
-          <label className="flex items-center gap-3 font-bold"><input type="checkbox" checked={current.enabled} onChange={e => edit({ enabled: e.target.checked })} className="h-5 w-5 accent-orange-600" />{current.enabled ? 'Enabled' : 'Disabled'}</label>
+          <label className="flex items-center gap-3 font-bold"><input type="checkbox" checked={current.enabled} onChange={e => void toggleEnabled(e.target.checked)} className="h-5 w-5 accent-orange-600" />{current.enabled ? 'Enabled' : 'Disabled'}</label>
+          <p className="text-sm text-slate-500">Enable and disable changes save immediately.</p>
           <label className="block font-bold">Subject<input maxLength={200} value={current.subject} onChange={e => edit({ subject: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-normal focus:outline-orange-500" /></label>
           <label className="block font-bold">Email body<textarea rows={9} maxLength={20000} value={current.body} onChange={e => edit({ body: e.target.value })} className="mt-2 w-full rounded-xl border border-slate-200 p-3 font-mono text-sm font-normal focus:outline-orange-500" /></label>
           <p className="text-sm text-slate-500">Use plain text and the variables below. The branded layout automatically includes products, totals, payment, address, and available tracking details.</p>

@@ -37,7 +37,7 @@ export async function sendOrderEmail(type: OrderEmailType, order: IOrder, extraD
       await Order.updateOne({ _id: order._id }, { $pull: { emailDeliveries: { key } } }, { timestamps: false });
       return 'skipped';
     }
-    const rendered = renderOrderEmail(current, order, process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || '');
+    const rendered = renderOrderEmail(current, order, process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || '', true);
     await sendMicrosoftMail({ senderName: '8 GEARS', to: type === 'new_order' ? process.env.ADMIN_EMAIL || MICROSOFT_MAILBOX : order.customerInfo.email, ...rendered });
     await Order.updateOne({ _id: order._id, 'emailDeliveries.key': key }, { $set: {
       'emailDeliveries.$.state': 'sent', 'emailDeliveries.$.sentAt': new Date(),

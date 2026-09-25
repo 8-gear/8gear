@@ -187,3 +187,49 @@ test('template disabled between claim and transport is not sent', async () => {
   assert.equal(await service.sendOrderEmail('new_order', order), 'skipped');
   assert.equal(sends, 0);
 });
+test('email toggles persist across reloads without saving draft content', async () => {
+  const saved = { ...templates.DEFAULT_TEMPLATES[0] };
+  const route = load('app/api/admin/emails/route.ts', {
+    'next/server': { NextResponse: Response },
+    '@/lib/adminAuth': { requireAdminApi: async () => ({}) },
+    '@/lib/email/templates': templates,
+    '@/lib/email/sendOrderEmail': { getEmailTemplate: async type => type === saved.type ? { ...saved } : templates.DEFAULT_TEMPLATES.find(t => t.type === type) },
+    '@/models/EmailTemplate': { findOneAndUpdate: (filter, update) => ({ orFail: async () => { Object.assign(saved, update.$set); return { ...saved }; } }) },
+  });
+  for (const enabled of [false, true, false]) {
+    const response = await route.PATCH(new Request('https://example.com', { method: 'PATCH', body: JSON.stringify({ type: saved.type, enabled }) }));
+    assert.equal(response.status, 200);
+    assert.equal((await (await route.GET()).json())[0].enabled, enabled);
+    assert.equal(saved.subject, templates.DEFAULT_TEMPLATES[0].subject);
+    assert.equal(saved.body, templates.DEFAULT_TEMPLATES[0].body);
+  }
+  assert.equal((await route.PATCH(new Request('https://example.com', { method: 'PATCH', body: JSON.stringify({ type: saved.type, enabled: 'false' }) }))).status, 400);
+});
+test('sent emails contain a matching inline PNG attachment even with a localhost site URL', async () => {
+  let payload;
+  const graph = load('app/lib/email/microsoftGraph.ts', {
+    'node:fs/promises': { readFile: async filename => fs.promises.readFile(filename) },
+  });
+  const originalFetch = global.fetch;
+  const keys = ['MS_TENANT_ID', 'MS_CLIENT_ID', 'MS_CLIENT_SECRET'];
+  const previous = keys.map(key => process.env[key]);
+  keys.forEach(key => { process.env[key] = 'test'; });
+  global.fetch = async (url, options) => {
+    if (String(url).includes('/token')) return Response.json({ access_token: 'test', expires_in: 3600, token_type: 'Bearer' });
+    payload = JSON.parse(options.body);
+    return new Response(null, { status: 202 });
+  };
+  try {
+    const rendered = renderer.renderOrderEmail(templates.DEFAULT_TEMPLATES[0], order, 'http://localhost:3000', true);
+    await graph.sendMicrosoftMail({ to: 'test@example.com', senderName: '8 GEARS', ...rendered });
+    assert(payload.message.body.content.includes('src="cid:8gears-logo"'));
+    const attachment = payload.message.attachments[0];
+    assert.equal(attachment.contentId, '8gears-logo');
+    assert.equal(attachment.isInline, true);
+    assert.equal(attachment.contentType, 'image/png');
+    assert(Buffer.from(attachment.contentBytes, 'base64').equals(fs.readFileSync(path.join(__dirname, '../public/logo.png'))));
+  } finally {
+    global.fetch = originalFetch;
+    keys.forEach((key, i) => { if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i]; });
+  }
+});
