@@ -1,3 +1,4 @@
+import { sendOrderEmail } from '@/lib/email/sendOrderEmail';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import connectDB from '@/lib/db/mongodb';
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
         },
       ],
     });
+
+    await sendOrderEmail('new_order', order);
 
     // 4. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({

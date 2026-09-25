@@ -86,8 +86,6 @@ export async function POST(req: Request) {
     if (shouldSendConfirmationEmail) {
       try {
         await sendOrderConfirmationEmail(order);
-        order.orderConfirmationEmailSentAt = new Date();
-        await order.save();
       } catch (emailError) {
         console.error('[Email] Failed to send order confirmation email:', emailError);
       }

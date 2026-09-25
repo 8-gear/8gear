@@ -1,6 +1,7 @@
 export const ADMIN_PAGES = [
   { key: 'dashboard', label: 'Dashboard', href: '/admin' },
   { key: 'products', label: 'Products', href: '/admin/products' },
+  { key: 'emails', label: 'Emails', href: '/admin/emails' },
   { key: 'orders', label: 'Orders', href: '/admin/orders' },
   { key: 'categories', label: 'Categories', href: '/admin/categories' },
   { key: 'reviews', label: 'Reviews', href: '/admin/reviews' },

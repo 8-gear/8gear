@@ -1,67 +1,17 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/db/mongodb';
-import Order from '@/models/Order';
 import { requireAdminApi } from '@/lib/adminAuth';
+import { updateOrder, OrderUpdateError } from '@/lib/orders/updateOrder';
 
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const auth = await requireAdminApi('/admin/orders');
     if ('error' in auth) return auth.error;
-    await connectDB();
     const { id } = await params;
-
-    const {
-      orderStatus,
-      fulfillmentStatus,
-      courierName,
-      trackingNumber,
-      trackingUrl,
-      adminNotes,
-      timelineMessage,
-    } = await req.json();
-
-    const order = await Order.findById(id);
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-    if (order.archived) {
-      return NextResponse.json(
-        { error: 'Archived orders are read-only. Restore this order before editing it.' },
-        { status: 409 }
-      );
-    }
-
-    if (orderStatus) order.orderStatus = orderStatus;
-    if (fulfillmentStatus) order.fulfillmentStatus = fulfillmentStatus;
-    if (courierName !== undefined) {
-      if (!order.shipping) order.shipping = {};
-      order.shipping.courierName = courierName;
-    }
-    if (trackingNumber !== undefined) {
-      if (!order.shipping) order.shipping = {};
-      order.shipping.trackingNumber = trackingNumber;
-    }
-    if (trackingUrl !== undefined) {
-      if (!order.shipping) order.shipping = {};
-      order.shipping.trackingUrl = trackingUrl;
-    }
-    if (adminNotes !== undefined) order.adminNotes = adminNotes;
-
-    if (orderStatus) {
-      order.trackingTimeline.push({
-        status: orderStatus,
-        message: timelineMessage || `Order status updated to ${orderStatus.replace(/_/g, ' ')}.`,
-        timestamp: new Date(),
-        updatedBy: 'admin',
-      });
-    }
-
-    await order.save();
-    return NextResponse.json(order);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(await updateOrder(id, await req.json()));
+  } catch (error) {
+    if (error instanceof OrderUpdateError) return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error instanceof SyntaxError) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    console.error('[Orders] Update failed');
+    return NextResponse.json({ error: 'Unable to update order' }, { status: 500 });
   }
 }

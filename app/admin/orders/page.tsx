@@ -3,6 +3,9 @@
 import { getOptimizedCloudinaryImage } from "@/lib/cloudinaryImage";
 import AdminLayout from '@/app/components/AdminLayout';
 import { useState, useEffect } from 'react';
+import type { IOrder } from '@/models/Order';
+type AdminOrder = Omit<IOrder, keyof import('mongoose').Document | 'createdAt' | 'updatedAt'> & { _id: string; createdAt: string; updatedAt: string };
+const statuses = ['pending_payment', 'order_received', 'payment_confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'refunded'];
 import { 
   Search, 
   Filter, 
@@ -25,15 +28,23 @@ import {
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [orderStatus, setOrderStatus] = useState('');
   const [archiveView, setArchiveView] = useState<'active' | 'archived' | 'all'>('active');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState('');
+  const [tracking, setTracking] = useState({ courierName: '', trackingNumber: '', trackingUrl: '' });
+  const openOrder = (order: AdminOrder) => {
+    setUpdateMessage('');
+    setSelectedOrder(order);
+    setTracking({ courierName: order.shipping?.courierName || '', trackingNumber: order.shipping?.trackingNumber || '', trackingUrl: order.shipping?.trackingUrl || '' });
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -58,7 +69,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const updateArchiveStatus = async (order: any) => {
+  const updateArchiveStatus = async (order: AdminOrder) => {
     const willArchive = !order.archived;
     const confirmed = window.confirm(
       willArchive
@@ -90,44 +101,22 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const updateOrderStatus = async (id: string, status: string, message?: string) => {
+  const updateOrder = async (id: string, changes: { orderStatus?: string; courierName?: string; trackingNumber?: string; trackingUrl?: string }) => {
     setUpdating(true);
+    setUpdateMessage('');
     try {
       const res = await fetch(`/api/admin/orders/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderStatus: status, timelineMessage: message }),
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(changes),
       });
-      if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o._id === id ? updatedOrder : o));
-        setSelectedOrder(updatedOrder);
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update order');
+      setOrders(previous => previous.map(order => order._id === id ? data : order)
+        .filter(order => !orderStatus || order.orderStatus === orderStatus));
+      setSelectedOrder(previous => previous?._id === id ? data : previous);
+      setUpdateMessage('Order saved.');
     } catch (error) {
-      alert('Failed to update status');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const updateFulfillment = async (id: string, data: any) => {
-    setUpdating(true);
-    try {
-      const res = await fetch(`/api/admin/orders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const updatedOrder = await res.json();
-        setOrders(orders.map(o => o._id === id ? updatedOrder : o));
-        setSelectedOrder(updatedOrder);
-      }
-    } catch (error) {
-      alert('Failed to update fulfillment');
-    } finally {
-      setUpdating(false);
-    }
+      alert(error instanceof Error ? error.message : 'Failed to update order');
+    } finally { setUpdating(false); }
   };
 
   const getStatusColor = (status: string) => {
@@ -148,6 +137,7 @@ export default function AdminOrdersPage() {
   return (
     <AdminLayout>
       <div className="space-y-10">
+        {updateMessage && !isModalOpen && <p role="status" className="text-sm font-bold text-emerald-700">{updateMessage}</p>}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Order Logistics</h1>
@@ -191,6 +181,7 @@ export default function AdminOrdersPage() {
               <option value="processing">Processing</option>
               <option value="packed">Packed</option>
               <option value="shipped">Shipped</option>
+              <option value="out_for_delivery">Out for Delivery</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
@@ -265,7 +256,7 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex -space-x-2">
-                        {order.items.slice(0, 3).map((item: any, idx: number) => (
+                        {order.items.slice(0, 3).map((item, idx) => (
                           <div key={idx} className="w-10 h-10 rounded-xl border-2 border-white bg-slate-100 overflow-hidden shadow-sm">
                             <img src={getOptimizedCloudinaryImage(item.image, 420)} alt="" className="w-full h-full object-cover" />
                           </div>
@@ -284,9 +275,12 @@ export default function AdminOrdersPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getStatusColor(order.orderStatus)}`}>
-                        {order.orderStatus.replace(/_/g, ' ')}
-                      </span>
+                      <select aria-label={`Status for order ${order.orderId}`} value={order.orderStatus}
+                        disabled={updating || order.archived}
+                        onChange={event => void updateOrder(order._id, { orderStatus: event.target.value })}
+                        className={`max-w-48 rounded-xl border px-3 py-2 text-xs font-bold disabled:opacity-50 ${getStatusColor(order.orderStatus)}`}>
+                        {statuses.map(status => <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>)}
+                      </select>
                     </td>
                     <td className="px-8 py-6 text-right">
                       <button
@@ -299,7 +293,7 @@ export default function AdminOrdersPage() {
                         {order.archived ? <ArchiveRestore size={20} /> : <Archive size={20} />}
                       </button>
                       <button 
-                        onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
+                        onClick={() => openOrder(order)}
                         className="p-3 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-2xl transition-all"
                       >
                         <Eye size={20} />
@@ -385,7 +379,7 @@ export default function AdminOrdersPage() {
                     Payload Contents ({selectedOrder.items.length})
                   </h3>
                   <div className="space-y-3">
-                    {selectedOrder.items.map((item: any, idx: number) => (
+                    {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl">
                         <div className="w-16 h-16 rounded-xl bg-slate-50 overflow-hidden shrink-0">
                           <img src={getOptimizedCloudinaryImage(item.image, 420)} alt="" className="w-full h-full object-cover" />
@@ -418,52 +412,25 @@ export default function AdminOrdersPage() {
                       </div>
                     )}
                     <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-4">Master Status Override</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        'order_received', 
-                        'payment_confirmed', 
-                        'processing', 
-                        'packed', 
-                        'shipped', 
-                        'out_for_delivery', 
-                        'delivered', 
-                        'cancelled'
-                      ].map((status) => (
-                        <button
-                          key={status}
-                          disabled={updating || selectedOrder.archived || selectedOrder.orderStatus === status}
-                          onClick={() => updateOrderStatus(selectedOrder._id, status)}
-                          className={`py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50
-                            ${selectedOrder.orderStatus === status 
-                              ? 'bg-orange-600 text-white' 
-                              : 'bg-white/10 text-white/80 hover:bg-white/20'}`}
-                        >
-                          {status.replace(/_/g, ' ')}
-                        </button>
-                      ))}
-                    </div>
+                    <select aria-label="Order status" value={selectedOrder.orderStatus}
+                      disabled={updating || selectedOrder.archived}
+                      onChange={event => void updateOrder(selectedOrder._id, { orderStatus: event.target.value })}
+                      className="w-full rounded-xl border border-white/20 bg-slate-800 px-4 py-3 font-bold text-white disabled:opacity-50">
+                      {statuses.map(status => <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>)}
+                    </select>
 
-                    <div className="mt-8 space-y-4">
-                       <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Courier Manifest</p>
-                       <div className="space-y-2">
-                          <input 
-                            type="text" 
-                            placeholder="Courier Name (e.g. FedEx)"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-orange-500"
-                            defaultValue={selectedOrder.shipping?.courierName}
-                            disabled={selectedOrder.archived}
-                            onBlur={(e) => updateFulfillment(selectedOrder._id, { 'shipping.courierName': e.target.value })}
-                          />
-                          <input 
-                            type="text" 
-                            placeholder="Tracking Number"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-orange-500"
-                            defaultValue={selectedOrder.shipping?.trackingNumber}
-                            disabled={selectedOrder.archived}
-                            onBlur={(e) => updateFulfillment(selectedOrder._id, { 'shipping.trackingNumber': e.target.value })}
-                          />
-                       </div>
-                    </div>
+                    {updateMessage && <p role="status" className="mt-4 text-sm text-emerald-300">{updateMessage}</p>}
+                    <form className="mt-8 space-y-4" onSubmit={event => { event.preventDefault(); void updateOrder(selectedOrder._id, tracking); }}>
+                      <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Courier Manifest</p>
+                      {(['courierName', 'trackingNumber', 'trackingUrl'] as const).map(field => <label key={field} className="block text-xs font-bold text-white/80">
+                        {field === 'courierName' ? 'Carrier' : field === 'trackingNumber' ? 'Tracking number' : 'Tracking URL'}
+                        <input type={field === 'trackingUrl' ? 'url' : 'text'} maxLength={field === 'trackingUrl' ? 2000 : field === 'courierName' ? 120 : 200}
+                          value={tracking[field]} disabled={updating || selectedOrder.archived}
+                          onChange={event => setTracking(previous => ({ ...previous, [field]: event.target.value }))}
+                          className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-orange-500" />
+                      </label>)}
+                      <button type="submit" disabled={updating || selectedOrder.archived} className="rounded-xl bg-orange-600 px-5 py-3 text-sm font-bold disabled:opacity-50">{updating ? 'Saving…' : 'Save tracking'}</button>
+                    </form>
                   </div>
                 </section>
 
@@ -473,7 +440,7 @@ export default function AdminOrdersPage() {
                     Logistics History
                   </h3>
                   <div className="bg-slate-50 rounded-3xl p-6 space-y-6 max-h-[300px] overflow-y-auto">
-                    {selectedOrder.trackingTimeline.slice().reverse().map((step: any, idx: number) => (
+                    {selectedOrder.trackingTimeline.slice().reverse().map((step, idx) => (
                       <div key={idx} className="flex gap-4 relative">
                         {idx !== selectedOrder.trackingTimeline.length - 1 && (
                           <div className="absolute left-2.5 top-8 bottom-0 w-0.5 bg-slate-200"></div>

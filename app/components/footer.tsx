@@ -35,22 +35,22 @@ const otherLinks = [
 const socialLinks = [
   {
     name: "Facebook",
-    href: "#",
+    href: "https://www.facebook.com/share/1LRLfA46SL/",
     icon: Facebook,
   },
   {
     name: "Instagram",
-    href: "#",
+    href: "https://www.instagram.com/8gearofficial/?utm_source=ig_web_button_share_sheet",
     icon: Instagram,
   },
   {
     name: "LinkedIn",
-    href: "#",
+    href: "https://www.linkedin.com/company/8-gear/",
     icon: Linkedin,
   },
   {
     name: "YouTube",
-    href: "#",
+    href: "https://www.youtube.com/@8-gear",
     icon: Youtube,
   },
 ];

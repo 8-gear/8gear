@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Truck,
   MessageSquare,
-  Users
+  Users,
+  Mail
 } from 'lucide-react';
 import { canAccessAdminPage } from '@/lib/adminPermissions';
 
@@ -50,6 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Products', href: '/admin/products', icon: Package },
+    { name: 'Emails', href: '/admin/emails', icon: Mail },
     { name: 'Orders', href: '/admin/orders', icon: Truck },
     // { name: 'Leads', href: '/admin/leads', icon: LayoutDashboard },
     // { name: 'Subscribers', href: '/admin/subscribers', icon: MessageSquare },

@@ -1,3 +1,4 @@
+import { sendOrderEmail } from '@/lib/email/sendOrderEmail';
 import { NextResponse } from 'next/server';
 import paypal from '@paypal/checkout-server-sdk';
 import client from '@/lib/paypal';
@@ -57,6 +58,8 @@ export async function POST(req: Request) {
         },
       ],
     });
+
+    await sendOrderEmail('new_order', order);
 
     // 4. Create PayPal Order
     const request = new paypal.orders.OrdersCreateRequest();

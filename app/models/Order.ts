@@ -65,6 +65,7 @@ export interface IOrder extends Document {
   adminNotes?: string;
   stockReduced: boolean;
   orderConfirmationEmailSentAt?: Date;
+  emailRevision: number;
   archived: boolean;
   archivedAt?: Date;
   archivedBy?: string;
@@ -159,6 +160,15 @@ const OrderSchema: Schema = new Schema(
     adminNotes: { type: String },
     stockReduced: { type: Boolean, default: false },
     orderConfirmationEmailSentAt: { type: Date },
+    emailRevision: { type: Number, default: 0 },
+    emailDeliveries: { type: [{
+      _id: false,
+      key: { type: String, required: true },
+      type: { type: String, required: true },
+      state: { type: String, enum: ['claimed', 'sent', 'failed'], required: true },
+      claimedAt: Date,
+      sentAt: Date,
+    }], default: [], select: false },
     archived: { type: Boolean, default: false, index: true },
     archivedAt: { type: Date },
     archivedBy: { type: String },
