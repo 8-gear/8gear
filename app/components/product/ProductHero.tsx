@@ -13,7 +13,9 @@ import {
 import { useFormContext } from "react-hook-form";
 import { DISPLAY_CURRENCY } from "@/lib/checkout/constants";
 import { EditableText } from "@/app/components/admin/CMSComponents";
-import { getCloudinarySrcSet, getOptimizedCloudinaryImage } from "@/lib/cloudinaryImage";
+import { getOptimizedCloudinaryImage } from "@/lib/cloudinaryImage";
+
+import ProductImagePair, { preloadProductPair } from "./ProductImagePair";
 
 type ProductHeroProps = {
     product: any;
@@ -175,6 +177,8 @@ export default function ProductHero({
                                                 key={`${image}-${index}`}
                                                 type="button"
                                                 onClick={() => setActiveThumb(index)}
+                                                onMouseEnter={() => { void preloadProductPair(image, images[(index + 1) % images.length]).catch(() => {}); }}
+                                                onFocus={() => { void preloadProductPair(image, images[(index + 1) % images.length]).catch(() => {}); }}
                                                 aria-label={`View product image ${index + 1} of ${images.length}`}
                                                 aria-pressed={activeThumb === index}
                                                 className={`h-[56px] w-[44px] shrink-0 overflow-hidden border bg-[#f1f1f1] transition-all duration-200 max-[768px]:h-[64px] max-[768px]:w-[52px] ${activeThumb === index
@@ -210,34 +214,11 @@ export default function ProductHero({
                                 )}
 
                                 {/* Main Images */}
-                                <div className="grid grid-cols-[minmax(0,602px)_minmax(0,602px)] gap-[12px] max-[1500px]:grid-cols-2 max-[760px]:grid-cols-1">
-                                    {firstImage && (
-                                        <div className="aspect-[3/4] w-full overflow-hidden rounded-[20px] bg-[#ececec] shadow-[0_2px_7px_rgba(0,0,0,0.18)]">
-                                            <img
-                                                src={getOptimizedCloudinaryImage(firstImage, 1080)}
-                                                srcSet={getCloudinarySrcSet(firstImage)}
-                                                sizes="(max-width: 760px) 100vw, 42vw"
-                                                alt={product?.title || "Product image"}
-                                                className="h-full w-full object-contain"
-                                                decoding="async"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {secondImage && (
-                                        <div className="aspect-[3/4] w-full overflow-hidden rounded-[20px] bg-[#ececec] shadow-[0_2px_7px_rgba(0,0,0,0.14)] max-[760px]:hidden">
-                                            <img
-                                                src={getOptimizedCloudinaryImage(secondImage, 1080)}
-                                                srcSet={getCloudinarySrcSet(secondImage)}
-                                                sizes="42vw"
-                                                alt={`${product?.title || "Product"} detail`}
-                                                className="h-full w-full object-contain"
-                                                loading="lazy"
-                                                decoding="async"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                <ProductImagePair
+                                    first={firstImage}
+                                    second={secondImage}
+                                    title={product?.title || "Product image"}
+                                />
                             </div>
                         </div>
 
