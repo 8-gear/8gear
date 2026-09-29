@@ -24,6 +24,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ProductDetail from "./product/ProductDetail";
 import MediaManager from "./admin/MediaManager";
+import VariantImageGallery from "./admin/VariantImageGallery";
 import { PRODUCT_IMAGE_GUIDELINES, type ProductImageGuidelineKey } from "@/lib/productImageGuidelines";
 import { getOptimizedCloudinaryImage } from "@/lib/cloudinaryImage";
 
@@ -1793,101 +1794,22 @@ export default function ProductForm({
                                   </label>
                                   <ImageRequirement guidelineKey="variant" />
 
-                                  <div className="grid grid-cols-2 gap-3">
-                                    {watch(
-                                      `variants.${firstIndex}.images`
-                                    )?.map(
-                                      (
-                                        url: string,
-                                        imageIndex: number
-                                      ) => (
-                                        <div
-                                          key={`${url}-${imageIndex}`}
-                                          className="group/img relative aspect-square overflow-hidden rounded-2xl shadow-md"
-                                        >
-                                          <img
-                                            src={getOptimizedCloudinaryImage(url, 420)}
-                                            alt=""
-                                            className="h-full w-full object-cover"
-                                            loading="lazy"
-                                            decoding="async"
-                                          />
-
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const currentImages =
-                                                watch(
-                                                  `variants.${firstIndex}.images`
-                                                );
-
-                                              const newImages =
-                                                currentImages.filter(
-                                                  (
-                                                    _: any,
-                                                    index: number
-                                                  ) =>
-                                                    index !==
-                                                    imageIndex
-                                                );
-
-                                              sameColorIndices.forEach(
-                                                (
-                                                  index
-                                                ) =>
-                                                  setValue(
-                                                    `variants.${index}.images`,
-                                                    newImages,
-                                                    {
-                                                      shouldDirty:
-                                                        true,
-
-                                                      shouldValidate:
-                                                        true,
-                                                    }
-                                                  )
-                                              );
-                                            }}
-                                            className="absolute inset-0 flex items-center justify-center bg-red-600/80 text-white opacity-0 transition-opacity group-hover/img:opacity-100"
-                                          >
-                                            <X
-                                              size={
-                                                16
-                                              }
-                                            />
-                                          </button>
-                                        </div>
-                                      )
-                                    )}
-
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setMediaManager(
-                                          {
-                                            isOpen:
-                                              true,
-
-                                            path: `variants.${firstIndex}.images`,
-
-                                            multiple:
-                                              true,
-                                          }
-                                        )
-                                      }
-                                      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-gray-200 bg-white text-gray-300 transition-all hover:border-orange-500 hover:text-orange-500"
-                                    >
-                                      <Plus
-                                        size={
-                                          20
-                                        }
-                                      />
-
-                                      <span className="text-[7px] font-black uppercase">
-                                        Add Image
-                                      </span>
-                                    </button>
-                                  </div>
+                                  <VariantImageGallery
+                                    images={watch(`variants.${firstIndex}.images`) || []}
+                                    onChange={(images) => {
+                                      sameColorIndices.forEach((index) =>
+                                        setValue(`variants.${index}.images`, images, {
+                                          shouldDirty: true,
+                                          shouldValidate: true,
+                                        })
+                                      );
+                                    }}
+                                    onAdd={() => setMediaManager({
+                                      isOpen: true,
+                                      path: `variants.${firstIndex}.images`,
+                                      multiple: true,
+                                    })}
+                                  />
                                 </div>
 
                                 <div className="space-y-4">
