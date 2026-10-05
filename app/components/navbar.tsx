@@ -173,11 +173,6 @@ export default function Navbar() {
     },
 
     {
-      name: "Our Dealers",
-      link: "/dealers",
-    },
-
-    {
       name: "Contact Us",
       link: "/contact",
     },

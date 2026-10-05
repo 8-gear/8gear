@@ -83,18 +83,18 @@ const dealers: Dealer[] = [
     mapQuery:
       "625 Route du Président-Kennedy, Lévis, QC G6C 1K1, Canada",
   },
-  {
-    id: 6,
-    name: "8-Gear Canada",
-    address: "50 Biggar Ave, Hamilton, ON L8L 3Z4 Canada",
-    mapQuery: "50 Biggar Ave, Hamilton, ON L8L 3Z4, Canada",
-  },
-  {
-    id: 7,
-    name: "Sceprio Tex",
-    address: "455 GG, St 22, P4, DHA, Lahore",
-    mapQuery: "455 GG, Street 22, Phase 4, DHA, Lahore, Pakistan",
-  },
+  // {
+  //   id: 6,
+  //   name: "8-Gear Canada",
+  //   address: "50 Biggar Ave, Hamilton, ON L8L 3Z4 Canada",
+  //   mapQuery: "50 Biggar Ave, Hamilton, ON L8L 3Z4, Canada",
+  // },
+  // {
+  //   id: 7,
+  //   name: "Sceprio Tex",
+  //   address: "455 GG, St 22, P4, DHA, Lahore",
+  //   mapQuery: "455 GG, Street 22, Phase 4, DHA, Lahore, Pakistan",
+  // },
   {
     id: 8,
     name: "TripleClamp Moto",
