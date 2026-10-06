@@ -80,3 +80,16 @@ html {
 .font-inherit {
   font-family: inherit !important;
 }
+
+/* Prevent browser image highlighting and dragging on the navbar logo. */
+.navbar-logo,
+.navbar-logo img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+
+.navbar-logo img {
+  pointer-events: none;
+}

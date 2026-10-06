@@ -448,7 +448,7 @@ export default function TechnologyHero() {
               <button
                 type="button"
                 onClick={() =>
-                  router.push("/category?cat=all")
+                  router.push("/category")
                 }
                 className="
                   flex

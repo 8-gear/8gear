@@ -154,7 +154,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <button
                 onClick={() => {
                   onClose();
-                  router.push("/category?cat=all");
+                  router.push("/category");
                 }}
                 className="mt-7 h-[52px] px-8 rounded-full bg-black text-white text-[12px] tracking-[0.08em] uppercase hover:bg-white hover:text-black border border-black transition cursor-pointer"
               >

@@ -98,7 +98,7 @@ export default function LatestProducts() {
 
           {/* EXPLORE MORE - DESKTOP */}
           <Link
-            href="/category?cat=all"
+            href="/category"
             className="
               group
 
@@ -284,7 +284,7 @@ export default function LatestProducts() {
           "
         >
           <Link
-            href="/category?cat=all"
+            href="/category"
             className="
               group
 

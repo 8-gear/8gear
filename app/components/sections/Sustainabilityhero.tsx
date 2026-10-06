@@ -272,7 +272,7 @@ export default function SustainabilityHero() {
             <div className="mt-[46px] sm:mt-[52px]">
               <button
                 type="button"
-                onClick={() => router.push("/category?cat=all")}
+                onClick={() => router.push("/category")}
                 className="
                   flex
                   h-[58px]

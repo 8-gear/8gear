@@ -24,16 +24,14 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     
-    // Auto-generate slug if not provided
-    if (!body.slug) {
-      body.slug = body.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    if (typeof body.name !== 'string' || !body.name.trim()) {
+      return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
     }
-    
-    const category = await Category.create(body);
+    const category = await Category.create({ name: body.name.trim(), description: body.description });
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-      return NextResponse.json({ error: 'Category name or slug already exists' }, { status: 400 });
+      return NextResponse.json({ error: 'Category name already exists' }, { status: 400 });
     }
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Category request failed' }, { status: 500 });
   }
@@ -54,11 +52,6 @@ export async function PATCH(req: Request) {
     if (typeof body.description !== 'string') {
       return NextResponse.json({ error: 'Description must be text' }, { status: 400 });
     }
-    const slug = body.name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-    if (!slug || !/[\w]/.test(slug)) {
-      return NextResponse.json({ error: 'Category name must contain letters or numbers for the catalog ID' }, { status: 400 });
-    }
-
     await connectDB();
     // Products reference category names, so rename both atomically.
     const category = await mongoose.connection.transaction(async (session) => {
@@ -66,9 +59,9 @@ export async function PATCH(req: Request) {
       if (!existing) return null;
 
       const previousName = existing.name;
+      existing.aliases = [...new Set([...(existing.aliases || []), existing.name])];
       existing.name = body.name.trim();
       existing.description = body.description.trim();
-      existing.slug = slug;
       await existing.save({ session });
       if (previousName !== existing.name) {
         await Product.updateMany(
@@ -86,7 +79,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(category);
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-      return NextResponse.json({ error: 'Category name or catalog ID already exists' }, { status: 400 });
+      return NextResponse.json({ error: 'Category name already exists' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
   }

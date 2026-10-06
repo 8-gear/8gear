@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useRouter } from "next/navigation";
 
 const features = [
@@ -116,7 +117,7 @@ const DenimFeature = () => {
 
             <button
               type="button"
-              onClick={() => router.push("/category?cat=denim#category-listing")}
+              onClick={() => router.push("/category?categoryId=6a65dfecc52b57a1a991f914#category-listing")}
               className="
                 mt-[26px]
 

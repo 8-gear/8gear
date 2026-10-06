@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Product from '@/models/Product';
+import Category from '@/models/Category';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { requireAdminApi } from '@/lib/adminAuth';
 
@@ -41,7 +43,14 @@ export async function GET(req: Request) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category');
+    let category = searchParams.get('category');
+    const categoryId = searchParams.get('categoryId');
+    if (categoryId) {
+      if (!mongoose.isObjectIdOrHexString(categoryId)) return NextResponse.json({ error: 'Invalid category ID' }, { status: 400 });
+      const selected = await Category.findById(categoryId);
+      if (!selected) return NextResponse.json([]);
+      category = selected.name;
+    }
     
     const query = category
       ? { category, isActive: { $ne: false } }

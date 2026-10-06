@@ -152,7 +152,7 @@ export default function TechnologyDynimaSection() {
         ====================================================== */}
         <button
           type="button"
-          onClick={() => router.push("/category?cat=all")}
+          onClick={() => router.push("/category")}
           className="
             mt-[42px]
             flex

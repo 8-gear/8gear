@@ -16,10 +16,10 @@ export async function POST() {
 
     // Create Categories
     await Category.insertMany([
-      { name: 'Helmets', slug: 'helmets', description: 'Professional grade safety helmets.' },
-      { name: 'Gloves', slug: 'gloves', description: 'Abrasion resistant riding gloves.' },
-      { name: 'Jackets', slug: 'jackets', description: 'Weatherproof armored jackets.' },
-      { name: 'Boots', slug: 'boots', description: 'Reinforced protective footwear.' },
+      { name: 'Helmets', description: 'Professional grade safety helmets.' },
+      { name: 'Gloves', description: 'Abrasion resistant riding gloves.' },
+      { name: 'Jackets', description: 'Weatherproof armored jackets.' },
+      { name: 'Boots', description: 'Reinforced protective footwear.' },
     ]);
 
     // Create Sample Products

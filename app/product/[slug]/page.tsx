@@ -1,3 +1,5 @@
+import Category from "@/models/Category";
+import { categoryUrl } from "@/lib/categoryLinks";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -67,9 +69,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .slice(0, 8)
     .map((image: string) => absoluteUrl(image) || image);
   const primaryVariant = product.variants?.[0];
-  const categoryUrl = product.category
-    ? absoluteUrl(`/category?cat=${encodeURIComponent(product.category.toLowerCase())}`)
-    : null;
+  const category = product.category ? await Category.findOne({ name: product.category }) : null;
+  const categoryPageUrl = category ? absoluteUrl(categoryUrl(String(category._id))) : null;
 
   const productSchema = productUrl
     ? {
@@ -111,7 +112,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-          { "@type": "ListItem", position: 2, name: product.category || "Collection", item: categoryUrl || absoluteUrl("/category") },
+          { "@type": "ListItem", position: 2, name: product.category || "Collection", item: categoryPageUrl || absoluteUrl("/category") },
           { "@type": "ListItem", position: 3, name: product.title, item: productUrl },
         ],
       }

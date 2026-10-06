@@ -1,4 +1,5 @@
 "use client";
+import { categoryUrl } from "@/lib/categoryLinks";
 
 import { fetchCategories } from "@/lib/categoryRequests";
 import { getOptimizedCloudinaryImage } from "@/lib/cloudinaryImage";
@@ -59,7 +60,7 @@ export default function Categories() {
           {categories.slice(0, 4).map((category) => (
             <Link
               key={category._id}
-              href={`/category?cat=${encodeURIComponent(category.name.toLowerCase())}#category-listing`}
+              href={categoryUrl(category._id, true)}
               className="group relative bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
             >
               <div className="aspect-[4/5] overflow-hidden bg-slate-100">

@@ -12,7 +12,7 @@ export default function CheckoutHero() {
             Home
           </Link>
           <span>/</span>
-          <Link href="/category?cat=all" className="hover:text-orange-600 transition">
+          <Link href="/category" className="hover:text-orange-600 transition">
             Shop
           </Link>
           <span>/</span>

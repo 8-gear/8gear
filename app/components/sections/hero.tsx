@@ -303,7 +303,7 @@ const Hero = () => {
             >
               <button
                 type="button"
-                onClick={() => router.push("/category?cat=all")}
+                onClick={() => router.push("/category")}
                 className="
                   flex
                   h-[60px]

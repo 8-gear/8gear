@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICategory extends Document {
   name: string;
-  slug: string;
+  aliases?: string[];
   description?: string;
   image?: string;
   createdAt: Date;
@@ -12,7 +12,7 @@ export interface ICategory extends Document {
 const CategorySchema: Schema = new Schema(
   {
     name: { type: String, required: true, unique: true },
-    slug: { type: String, required: true, unique: true },
+    aliases: { type: [String], default: [], index: true },
     description: { type: String },
     image: { type: String },
   },

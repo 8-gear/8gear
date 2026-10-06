@@ -1,4 +1,5 @@
 "use client";
+import { categoryUrl } from "@/lib/categoryLinks";
 
 import { fetchCategories } from "@/lib/categoryRequests";
 import { useEffect, useState } from "react";
@@ -136,9 +137,7 @@ export default function Navbar() {
   const collectionItems = categories.map((category) => ({
     name: category.name,
 
-    link: `/category?cat=${encodeURIComponent(
-      category.name.toLowerCase()
-    )}#category-listing`,
+    link: categoryUrl(category._id, true),
   }));
 
   /* =====================================================
@@ -158,7 +157,7 @@ export default function Navbar() {
 
     {
       name: "Collection",
-      link: "/category?cat=all",
+      link: "/category",
       children: collectionItems,
     },
 
@@ -316,15 +315,21 @@ export default function Navbar() {
             ================================================= */}
             <Link
               href="/"
+              draggable={false}
+              onMouseDown={(event) => event.preventDefault()}
+              onDragStart={(event) => event.preventDefault()}
               className="
                 flex
                 shrink-0
                 items-center
                 justify-self-start
+                navbar-logo
+                select-none
               "
             >
               <Image
                 src="/logo.webp"
+                draggable={false}
                 alt="8 Gears"
                 width={135}
                 height={70}
@@ -333,6 +338,7 @@ export default function Navbar() {
                   h-auto
                   w-[135px]
                   object-contain
+                  select-none
                 "
               />
             </Link>
@@ -801,16 +807,22 @@ export default function Navbar() {
           ====================================================== */}
           <Link
             href="/"
+              draggable={false}
+              onMouseDown={(event) => event.preventDefault()}
+              onDragStart={(event) => event.preventDefault()}
             className="
               flex
               shrink-0
               items-center
 
               lg:hidden
+              navbar-logo
+              select-none
             "
           >
             <Image
               src="/logo.webp"
+                draggable={false}
               alt="8 Gears"
               width={105}
               height={55}
@@ -819,6 +831,7 @@ export default function Navbar() {
                 h-auto
                 w-[105px]
                 object-contain
+                select-none
               "
             />
           </Link>

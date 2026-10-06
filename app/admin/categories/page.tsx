@@ -8,7 +8,6 @@ import { FolderTree, Package, Plus, Pencil, Trash2, X } from 'lucide-react';
 interface Category {
   _id: string;
   name: string;
-  slug: string;
   description?: string;
 }
 
@@ -139,7 +138,7 @@ export default function ManageCategories() {
               <p className="text-slate-500 text-sm font-medium mb-6 line-clamp-2">{cat.description || 'No description provided.'}</p>
               <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 <Package size={14} className="text-orange-500" />
-                <span>Global Catalog ID: {cat.slug}</span>
+                <span>Category ID: {cat._id}</span>
               </div>
             </div>
           ))}
@@ -170,6 +169,12 @@ export default function ManageCategories() {
                   onChange={e => setNewCategory({...newCategory, name: e.target.value})}
                 />
               </div>
+              {editingId && (
+                <div>
+                  <label htmlFor="category-id" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Category ID</label>
+                  <input id="category-id" readOnly value={editingId} className="w-full px-6 py-4 rounded-2xl bg-slate-50 font-mono text-sm" />
+                </div>
+              )}
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Brief Description</label>
                 <textarea 

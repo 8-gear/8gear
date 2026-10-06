@@ -1,5 +1,6 @@
 "use client";
 
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -31,7 +32,7 @@ const FleeceBanner = () => {
             </h2>
 
             <Link
-              href="/category?cat=fleece#category-listing"
+              href={"/category?categoryId=6a65dfd4c52b57a1a991f913#category-listing"}
               className="mt-[58px] flex h-[70px] w-[255px] items-center justify-center rounded-full border border-white/25 bg-black/55 font-[var(--font-sf-pro)] text-[17px] font-medium text-white backdrop-blur-[5px] transition-all duration-300 hover:bg-white hover:text-black sm:w-[265px] sm:text-[18px]"
             >
               Explore Collection

@@ -1,3 +1,4 @@
+import { categoryUrl } from "@/lib/categoryLinks";
 import type { MetadataRoute } from 'next';
 import connectDB from '@/app/lib/db/mongodb';
 import Category from '@/app/models/Category';
@@ -38,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return url ? [{ url, lastModified: product.updatedAt }] : [];
     });
     const categoryEntries: MetadataRoute.Sitemap = categories.flatMap((category) => {
-      const url = absoluteUrl(`/category?cat=${encodeURIComponent(category.name.toLowerCase())}`);
+      const url = absoluteUrl(categoryUrl(String(category._id)));
       return url ? [{ url, lastModified: category.updatedAt }] : [];
     });
 

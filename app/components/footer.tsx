@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const exploreLinks = [
-  { name: "Collection", href: "/category?cat=all" },
+  { name: "Collection", href: "/category" },
   { name: "Technology", href: "/technology" },
   { name: "Sustainability", href: "/sustainability" },
 ];

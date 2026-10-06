@@ -1,18 +1,18 @@
 "use client";
 
+import { categoryUrl, resolveCategory } from "@/lib/categoryLinks";
 import { fetchCategories } from "@/lib/categoryRequests";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search, Filter } from "lucide-react";
 import ProductCard from "@/components/productcard";
 import { ProductSkeleton } from "@/components/Skeleton";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/app/types/product";
 
-type CategoryOption = { _id: string; name: string };
+type CategoryOption = { _id: string; name: string; slug?: string; aliases?: string[] };
 
 export default function CategoryListing() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -54,7 +54,7 @@ export default function CategoryListing() {
 
       const hash = window.location.hash;
       const currentCat = (
-        searchParams.get("cat") || "all"
+        searchParams.get("categoryId") || searchParams.get("slug") || searchParams.get("cat") || "all"
       ).toLowerCase();
 
       if (hash === "#category-listing") {
@@ -104,7 +104,7 @@ export default function CategoryListing() {
     const handlePopStateOrPageShow = () => {
       const hash = window.location.hash;
       const currentCat = (
-        new URLSearchParams(window.location.search).get("cat") || "all"
+        new URLSearchParams(window.location.search).get("categoryId") || new URLSearchParams(window.location.search).get("slug") || new URLSearchParams(window.location.search).get("cat") || "all"
       ).toLowerCase();
 
       if (hash !== "#category-listing" && currentCat === "all") {
@@ -125,12 +125,9 @@ export default function CategoryListing() {
     };
   }, [searchParams]);
 
-  const selectedCategoryValue = (
-    searchParams.get("cat") || "all"
-  ).toLowerCase();
-  const selectedCategoryName = categories.find(
-    (category) => String(category.name || "").toLowerCase() === selectedCategoryValue
-  )?.name;
+  const selectedCategory = resolveCategory(categories, searchParams.get("categoryId"), searchParams.get("cat"), searchParams.get("slug"));
+  const selectedCategoryValue = selectedCategory?._id || (searchParams.get("categoryId") || searchParams.get("slug") || searchParams.get("cat") || "all");
+  const selectedCategoryName = selectedCategory?.name;
 
   const filteredProducts = useMemo(() => {
     let result = products;
@@ -139,7 +136,7 @@ export default function CategoryListing() {
       result = result.filter(
         (product) =>
           String(product.category || "").toLowerCase() ===
-          selectedCategoryValue
+          selectedCategoryName?.toLowerCase()
       );
     }
 
@@ -158,18 +155,13 @@ export default function CategoryListing() {
     }
 
     return result;
-  }, [products, searchQuery, selectedCategoryValue]);
+  }, [products, searchQuery, selectedCategoryValue, selectedCategoryName]);
 
-  const updateCategory = (categoryName: string) => {
+  const updateCategory = (categoryId: string) => {
     isInternalFilterClickRef.current = true;
-    const normalizedCategory = categoryName.toLowerCase();
 
-    router.push(
-      `/category?cat=${encodeURIComponent(normalizedCategory)}`,
-      {
-        scroll: false,
-      }
-    );
+    // Products are already loaded: update the filter URL without fetching a new server page.
+    window.history.pushState(null, "", categoryUrl(categoryId === "all" ? undefined : categoryId));
   };
 
   return (
@@ -212,14 +204,13 @@ export default function CategoryListing() {
 
             {categories.map((category) => {
               const isActive =
-                String(category.name || "").toLowerCase() ===
-                selectedCategoryValue;
+                category._id === selectedCategoryValue;
 
               return (
                 <button
                   key={category._id}
                   type="button"
-                  onClick={() => updateCategory(category.name)}
+                  onClick={() => updateCategory(category._id)}
                   className={cn(
                     "flex h-[44px] items-center justify-center rounded-full border px-[28px] font-[var(--font-sf-pro)] text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300",
                     isActive

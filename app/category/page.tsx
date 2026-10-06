@@ -1,3 +1,4 @@
+import { categoryUrl, resolveCategory } from "@/lib/categoryLinks";
 import React, { Suspense } from "react";
 
 import CategoryHero from "@/app/components/sections/CategoryHero";
@@ -8,6 +9,7 @@ import ContactSection from "@/components/ContactSection";
 
 import connectDB from "@/app/lib/db/mongodb";
 import Category from "@/app/models/Category";
+import mongoose from "mongoose";
 
 import {
   cleanSeoText,
@@ -17,6 +19,8 @@ import {
 type CategoryPageProps = {
   searchParams: Promise<{
     cat?: string | string[];
+    categoryId?: string | string[];
+    slug?: string | string[];
   }>;
 };
 
@@ -34,7 +38,9 @@ export async function generateMetadata({
 
   const normalized = (selected || "all").toLowerCase();
 
-  if (normalized === "all") {
+  const categoryId = Array.isArray(params.categoryId) ? params.categoryId[0] : params.categoryId;
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  if (!categoryId && !slug && normalized === "all") {
     return createPageMetadata({
       title: "Motorcycle Riding Gear Collection",
       description:
@@ -46,14 +52,15 @@ export async function generateMetadata({
   try {
     await connectDB();
 
-    const categories = await Category.find({})
-      .select("name description image")
-      .lean();
-
-    const category = categories.find(
-      (item) =>
-        item.name.toLowerCase() === normalized
-    );
+    const fields = "name slug aliases description image";
+    // Use the existing indexes for current links; scan only for legacy aliases.
+    const category = categoryId
+      ? (mongoose.isObjectIdOrHexString(categoryId)
+        ? await Category.findById(categoryId).select(fields).lean()
+        : null)
+      : slug
+        ? await Category.find({ $or: [{ slug }, { aliases: slug }] }).select(fields).lean().then(matches => matches.length === 1 ? matches[0] : undefined)
+        : resolveCategory(await Category.find({}).select(fields).lean(), null, normalized);
 
     if (!category) {
       throw new Error("Category not found");
@@ -64,9 +71,7 @@ export async function generateMetadata({
       description:
         cleanSeoText(category.description) ||
         `Browse 8-Gear ${category.name.toLowerCase()} designed for motorcycle riders seeking protection, comfort, and performance.`,
-      path: `/category?cat=${encodeURIComponent(
-        category.name.toLowerCase()
-      )}`,
+      path: categoryUrl(String(category._id)),
       image: category.image || undefined,
     });
   } catch {
