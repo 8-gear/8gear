@@ -29,8 +29,34 @@ const contactTeams = [
 ];
 
 export default function ContactFormSection() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [sending, setSending] = React.useState(false);
+  const submitting = React.useRef(false);
+  const [feedback, setFeedback] = React.useState<{ success: boolean; message: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting.current) return;
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    submitting.current = true;
+    setSending(true);
+    setFeedback(null);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(data)),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Unable to send your inquiry. Please try again.');
+      form.reset();
+      setFeedback({ success: true, message: 'Thank you! Your inquiry has been submitted to our support team.' });
+    } catch (error) {
+      setFeedback({ success: false, message: error instanceof Error ? error.message : 'Unable to send your inquiry. Please try again.' });
+    } finally {
+      submitting.current = false;
+      setSending(false);
+    }
   };
 
   return (
@@ -99,6 +125,10 @@ export default function ContactFormSection() {
               onSubmit={handleSubmit}
               className="mt-[48px] sm:mt-[54px] lg:mt-[56px]"
             >
+              <div hidden aria-hidden="true">
+                <label htmlFor="contactWebsite">Website</label>
+                <input id="contactWebsite" name="website" tabIndex={-1} autoComplete="off" />
+              </div>
               {/* Full Name */}
               <div>
                 <label
@@ -121,6 +151,7 @@ export default function ContactFormSection() {
                 <input
                   id="fullName"
                   name="fullName"
+                  maxLength={120}
                   type="text"
                   required
                   placeholder="Your Full Name"
@@ -174,6 +205,7 @@ export default function ContactFormSection() {
                 <input
                   id="email"
                   name="email"
+                  maxLength={254}
                   type="email"
                   required
                   placeholder="example@gmail.com"
@@ -227,6 +259,7 @@ export default function ContactFormSection() {
                 <input
                   id="subject"
                   name="subject"
+                  maxLength={200}
                   type="text"
                   required
                   placeholder="Enter Subject"
@@ -280,6 +313,7 @@ export default function ContactFormSection() {
                 <textarea
                   id="message"
                   name="message"
+                  maxLength={5000}
                   required
                   placeholder="What do you want to know about our dealers?"
                   className="
@@ -315,6 +349,8 @@ export default function ContactFormSection() {
               {/* Button */}
               <button
                 type="submit"
+                disabled={sending}
+                aria-busy={sending}
                 className="
                   mt-[46px]
                   flex
@@ -336,6 +372,8 @@ export default function ContactFormSection() {
                   duration-300
 
                   hover:bg-[#202020]
+                  disabled:opacity-60
+                  disabled:cursor-wait
 
                   sm:h-[64px]
 
@@ -343,8 +381,13 @@ export default function ContactFormSection() {
                   lg:text-[16px]
                 "
               >
-                Submit Inquiry
+                {sending ? "Sending…" : "Submit Inquiry"}
               </button>
+              {feedback && (
+                <p role={feedback.success ? 'status' : 'alert'} className={`mt-4 text-sm ${feedback.success ? 'text-green-700' : 'text-red-700'}`}>
+                  {feedback.message}
+                </p>
+              )}
             </form>
           </div>
         </div>

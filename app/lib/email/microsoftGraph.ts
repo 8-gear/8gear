@@ -6,6 +6,7 @@ export const MICROSOFT_MAILBOX = 'ma@8-gear.com';
 type MailMessage = {
   senderName: string;
   to: string | undefined;
+  replyTo?: string;
   subject: string;
   html: string;
 };
@@ -102,6 +103,7 @@ export async function sendMicrosoftMail(message: MailMessage): Promise<void> {
             attachments,
             body: { contentType: 'HTML', content: message.html },
             from: { emailAddress: { address: MICROSOFT_MAILBOX, name: message.senderName } },
+            replyTo: message.replyTo ? [{ emailAddress: { address: message.replyTo } }] : undefined,
             toRecipients: [{ emailAddress: { address: message.to.trim() } }],
           },
           saveToSentItems: true,
