@@ -94,7 +94,7 @@ export default function ContactFAQ() {
           >
             Frequently Asked Questions About Our Outdoor
             <br className="hidden sm:block" />
-            Sports Apparel
+            Motorcycle Apparel
           </h2>
 
           <p

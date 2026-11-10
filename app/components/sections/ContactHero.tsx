@@ -16,30 +16,7 @@ export default function ContactHero() {
           }}
         />
 
-        {/* Faint 8 behind heading */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top-[205px]
-            z-[1]
-            -translate-x-1/2
-            font-[var(--font-sf-pro)]
-            text-[90px]
-            font-semibold
-            leading-none
-            text-black/[0.045]
-
-            sm:top-[220px]
-            sm:text-[100px]
-
-            lg:top-[230px]
-            lg:text-[112px]
-          "
-        >
-          8
-        </div>
+  
 
         {/* Back To Home */}
         <Link
@@ -141,7 +118,7 @@ export default function ContactHero() {
 
               <span className="font-bold">
                 {" "}
-                High-Performance Outdoor Sports Apparel
+                High-Performance Outdoor Motorcycle Apparel
               </span>
             </h1>
           </div>
